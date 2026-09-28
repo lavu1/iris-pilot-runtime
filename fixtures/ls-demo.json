@@ -1,0 +1,78 @@
+{
+  "contract": {
+    "country_code": "LS",
+    "region_code": "DEMO",
+    "source_id": "pilot-fixture",
+    "source_date": "2026-01-15",
+    "crs": "EPSG:4326",
+    "coordinate_units": "degrees",
+    "completeness": "complete",
+    "expected_feature_count": 2,
+    "uncertainty": "Synthetic demonstration data only. Geometry and names are invented; ownership, environmental eligibility, planning and site suitability are unverified. No permit or construction readiness is represented.",
+    "synthetic": true
+  },
+  "sites": [
+    {
+      "site_id": "demo-001",
+      "name": "Lesotho Synthetic Site 1",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              27.49,
+              -29.31
+            ],
+            [
+              27.491,
+              -29.31
+            ],
+            [
+              27.491,
+              -29.309
+            ],
+            [
+              27.49,
+              -29.309
+            ],
+            [
+              27.49,
+              -29.31
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "site_id": "demo-002",
+      "name": "Lesotho Synthetic Site 2",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              27.5,
+              -29.31
+            ],
+            [
+              27.501,
+              -29.31
+            ],
+            [
+              27.501,
+              -29.309
+            ],
+            [
+              27.5,
+              -29.309
+            ],
+            [
+              27.5,
+              -29.31
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

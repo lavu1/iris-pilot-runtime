@@ -1,0 +1,44 @@
+name: Runtime checks
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install --no-deps --no-build-isolation -e .
+      - name: Quality gates
+        run: |
+          ruff check .
+          ruff format --check .
+          mypy src
+          pytest -m 'not integration'
+      - name: Real PostGIS integration tests
+        run: sh scripts/test.sh
+      - name: Compose startup and failure gate
+        run: sh scripts/test-startup.sh
+      - name: DE / NW smoke
+        run: sh scripts/smoke.sh config/development.env.example
+      - name: ZM / LSK smoke with unchanged code
+        run: sh scripts/smoke.sh config/second-host.env.example
+      - name: Southern African country configurations
+        run: sh scripts/test-countries.sh
+      - name: Cleanup smoke stacks
+        if: always()
+        run: |
+          docker compose --env-file config/development.env.example down --volumes
+          docker compose --env-file config/second-host.env.example down --volumes

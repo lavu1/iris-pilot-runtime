@@ -1,0 +1,78 @@
+{
+  "contract": {
+    "country_code": "BW",
+    "region_code": "DEMO",
+    "source_id": "pilot-fixture",
+    "source_date": "2026-01-15",
+    "crs": "EPSG:4326",
+    "coordinate_units": "degrees",
+    "completeness": "complete",
+    "expected_feature_count": 2,
+    "uncertainty": "Synthetic demonstration data only. Geometry and names are invented; ownership, environmental eligibility, planning and site suitability are unverified. No permit or construction readiness is represented.",
+    "synthetic": true
+  },
+  "sites": [
+    {
+      "site_id": "demo-001",
+      "name": "Botswana Synthetic Site 1",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.92,
+              -24.65
+            ],
+            [
+              25.921,
+              -24.65
+            ],
+            [
+              25.921,
+              -24.649
+            ],
+            [
+              25.92,
+              -24.649
+            ],
+            [
+              25.92,
+              -24.65
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "site_id": "demo-002",
+      "name": "Botswana Synthetic Site 2",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.93,
+              -24.65
+            ],
+            [
+              25.931,
+              -24.65
+            ],
+            [
+              25.931,
+              -24.649
+            ],
+            [
+              25.93,
+              -24.649
+            ],
+            [
+              25.93,
+              -24.65
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "iris-pilot-runtime"
+version = "0.1.0"
+description = "Portable, country-scoped IRIS pilot runtime (IRIS-CAND-09)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["psycopg[binary]==3.3.6", "pydantic==2.13.5"]
+
+[project.scripts]
+iris = "iris_runtime.cli:main"
+
+[dependency-groups]
+dev = ["hatchling==1.32.4", "editables==0.5", "pytest==9.1.1", "pytest-cov==7.1.0", "ruff==0.16.9", "mypy==2.3.1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/iris_runtime"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["integration: requires an isolated PostgreSQL/PostGIS test database"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.coverage.run]
+source = ["iris_runtime"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true

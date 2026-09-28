@@ -1,0 +1,125 @@
+x-database-environment: &database-environment
+  DB_HOST: db
+  DB_PORT: "5432"
+  DB_NAME: ${DB_NAME:?Set DB_NAME in your env file}
+
+x-worker-environment: &worker-environment
+  <<: *database-environment
+  DB_USER: ${APP_DB_USER:?Set APP_DB_USER in your env file}
+  DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in your env file}
+  COUNTRY_CODE: ${COUNTRY_CODE:?Set COUNTRY_CODE in your env file}
+  REGION_CODE: ${REGION_CODE:?Set REGION_CODE in your env file}
+  SOURCE_ENDPOINT: ${SOURCE_ENDPOINT:?Set SOURCE_ENDPOINT in your env file}
+  OUTPUT_PATH: ${OUTPUT_PATH:?Set OUTPUT_PATH in your env file}
+
+x-application: &application
+  build:
+    context: .
+    target: runtime
+  image: iris-pilot-runtime:0.1.0
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: ["/tmp:size=32m,mode=1777"]
+  networks: [pilot]
+  restart: "no"
+
+services:
+  db:
+    image: postgis/postgis:16-3.5@sha256:94146ac37bc61e2322f88016056c5920729cb8c64c8542ed590af8fc2abdac07
+    # Upstream PostGIS image is AMD64; Docker Desktop emulates it on Apple Silicon.
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Set DB_NAME in your env file}
+      POSTGRES_USER: ${DB_ADMIN_USER:?Set DB_ADMIN_USER in your env file}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?Set DB_ADMIN_PASSWORD in your env file}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    networks: [pilot]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    restart: unless-stopped
+    # No published database port; access stays inside this Compose project.
+
+  migrate:
+    <<: *application
+    command: [migrate]
+    environment:
+      <<: *database-environment
+      DB_USER: ${DB_ADMIN_USER:?Set DB_ADMIN_USER in your env file}
+      DB_PASSWORD: ${DB_ADMIN_PASSWORD:?Set DB_ADMIN_PASSWORD in your env file}
+      APP_DB_USER: ${APP_DB_USER:?Set APP_DB_USER in your env file}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in your env file}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    <<: *application
+    command: [run]
+    environment: *worker-environment
+    volumes:
+      - type: bind
+        source: ${FIXTURE_PATH:-./fixtures}
+        target: /fixtures
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: volume
+        source: output_data
+        target: /output
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  smoke:
+    <<: *application
+    profiles: [tools]
+    command: [smoke]
+    environment: *worker-environment
+    volumes:
+      - type: bind
+        source: ${FIXTURE_PATH:-./fixtures}
+        target: /fixtures
+        read_only: true
+        bind:
+          create_host_path: false
+      - output_data:/output
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  tests:
+    <<: *application
+    profiles: [tools]
+    build:
+      context: .
+      target: test
+    image: iris-pilot-tests:0.1.0
+    environment:
+      <<: *database-environment
+      DB_USER: ${DB_ADMIN_USER:?Set DB_ADMIN_USER in your env file}
+      DB_PASSWORD: ${DB_ADMIN_PASSWORD:?Set DB_ADMIN_PASSWORD in your env file}
+      APP_DB_USER: ${APP_DB_USER:?Set APP_DB_USER in your env file}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in your env file}
+      IRIS_TEST_DATABASE: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  pilot:
+    internal: true
+
+volumes:
+  database_data:
+  output_data:
